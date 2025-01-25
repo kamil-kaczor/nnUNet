@@ -294,6 +294,32 @@ class nnUNetPlannerResEncXL(ResEncUNetPlanner):
         self.max_dataset_covered = 1
 
 
+class nnUNetPlannerResEncGaudi2(ResEncUNetPlanner):
+    """
+    Target is 80 GB VRAM max -> Gaudi2
+    """
+    def __init__(self, dataset_name_or_id: Union[str, int],
+                 gpu_memory_target_in_gb: float = 80,
+                 preprocessor_name: str = 'DefaultPreprocessor', plans_name: str = 'nnUNetPlannerResEncGaudi2',
+                 overwrite_target_spacing: Union[List[float], Tuple[float, ...]] = None,
+                 suppress_transpose: bool = False):
+        if gpu_memory_target_in_gb != 80:
+            warnings.warn("WARNING: You are running nnUNetPlannerXL with a non-standard gpu_memory_target_in_gb. "
+                          f"Expected 80, got {gpu_memory_target_in_gb}."
+                          "You should only see this warning if you modified this value intentionally!!")
+        super().__init__(dataset_name_or_id, gpu_memory_target_in_gb, preprocessor_name, plans_name,
+                         overwrite_target_spacing, suppress_transpose)
+        self.UNet_class = ResidualEncoderUNet
+
+        self.UNet_vram_target_GB = gpu_memory_target_in_gb
+        self.UNet_reference_val_corresp_GB = 80
+
+        # idk what is this but I've increased it by the same step that it increased between XL and M plan (20->40GB there, 40GB->80GB here)
+        self.UNet_reference_val_3d = 5100000000
+        self.UNet_reference_val_2d = 740000000
+        self.max_dataset_covered = 1
+
+
 if __name__ == '__main__':
     # we know both of these networks run with batch size 2 and 12 on ~8-10GB, respectively
     net = ResidualEncoderUNet(input_channels=1, n_stages=6, features_per_stage=(32, 64, 128, 256, 320, 320),
